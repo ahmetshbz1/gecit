@@ -189,7 +189,16 @@ func (p *HTTPConnectProxy) injectAndForward(clientConn, serverConn net.Conn, dst
 func pipe(a, b net.Conn) {
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go func() { defer wg.Done(); io.Copy(b, a) }()
-	go func() { defer wg.Done(); io.Copy(a, b) }()
+
+	cp := func(dst, src net.Conn) {
+		defer wg.Done()
+		io.Copy(dst, src)
+		// One direction finished — unblock the other by expiring deadlines.
+		a.SetDeadline(time.Now())
+		b.SetDeadline(time.Now())
+	}
+
+	go cp(b, a)
+	go cp(a, b)
 	wg.Wait()
 }
