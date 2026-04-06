@@ -18,7 +18,7 @@ App connects to target:443
     ↓
 gecit intercepts the connection
   Linux:  eBPF sock_ops fires (inside kernel, before app sends data)
-  macOS:  TUN device captures packet, gVisor netstack terminates TCP
+  macOS/Windows: TUN device captures packet, gVisor netstack terminates TCP
     ↓
 Fake ClientHello with SNI "www.google.com" sent with low TTL
     ↓
@@ -31,8 +31,6 @@ Real ClientHello passes through → DPI already desynchronized
 Some ISPs inspect the TLS ClientHello SNI field to identify and block specific domains. gecit sends a fake ClientHello with a different SNI (`www.google.com`) and a low TTL before the real one. The DPI processes the fake and lets the connection through. The fake packet expires before reaching the server due to its low TTL.
 
 Additionally, some ISPs poison DNS responses. gecit includes a built-in DoH (DNS-over-HTTPS) server that resolves domains through encrypted HTTPS, bypassing DNS-level blocking.
-
-See [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) for the full technical explanation.
 
 ## Installation
 
@@ -64,7 +62,7 @@ sudo ./gecit run
 
 ### Building from source
 
-Requires Go 1.24+. Linux builds need kernel 5.10+, clang, and llvm-strip for BPF compilation.
+Requires Go 1.24+. Linux builds need kernel 5.10+, clang, and llvm-strip for BPF compilation. Windows builds need Npcap SDK for CGO.
 
 ```bash
 git clone https://github.com/boratanrikulu/gecit.git
@@ -74,6 +72,7 @@ make gecit-linux-amd64    # Linux x86_64
 make gecit-linux-arm64    # Linux ARM64
 make gecit-darwin-arm64   # macOS Apple Silicon
 make gecit-darwin-amd64   # macOS Intel
+make gecit-windows-amd64  # Windows x86_64 (requires Npcap SDK + CGO)
 
 sudo ./bin/gecit-linux-arm64 run
 ```
@@ -82,9 +81,9 @@ gecit sets up everything automatically:
 - **DoH DNS server** on `127.0.0.1:53` (bypasses DNS poisoning)
 - **System DNS** pointed to the local DoH server
 - **Linux**: eBPF program attached to cgroup (fake injection + MSS fragmentation)
-- **macOS**: TUN virtual interface with automatic routing (all apps intercepted)
+- **macOS/Windows**: TUN virtual interface with automatic routing (all apps intercepted)
 
-Press `Ctrl+C` to stop — everything is restored (DNS, routes, BPF programs).
+Press `Ctrl+C` to stop — everything is restored (DNS, routes, BPF programs). Windows requires [Npcap](https://npcap.com) for full DPI bypass support.
 
 If gecit crashes, run `sudo gecit cleanup` to restore system settings.
 
