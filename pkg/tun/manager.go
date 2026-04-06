@@ -224,12 +224,20 @@ func detectPhysicalInterface() string {
 		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 {
 			continue
 		}
-		if len(iface.Name) >= 4 && iface.Name[:4] == "utun" {
+		// Skip TUN/VPN interfaces.
+		name := iface.Name
+		if len(name) >= 4 && name[:4] == "utun" {
 			continue
 		}
 		addrs, _ := iface.Addrs()
-		if len(addrs) > 0 && len(iface.Name) >= 2 && iface.Name[:2] == "en" {
-			return iface.Name
+		for _, a := range addrs {
+			ipNet, ok := a.(*net.IPNet)
+			if !ok {
+				continue
+			}
+			if ipv4 := ipNet.IP.To4(); ipv4 != nil && !ipv4.IsLoopback() && !ipv4.Equal(net.IPv4(10, 0, 85, 1)) {
+				return name
+			}
 		}
 	}
 	return ""
