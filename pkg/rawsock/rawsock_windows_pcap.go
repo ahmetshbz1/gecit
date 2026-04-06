@@ -5,15 +5,17 @@ package rawsock
 import (
 	"fmt"
 	"net"
+	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/google/gopacket/pcap"
 )
 
-// pcapRawSocket uses Npcap's pcap_sendpacket for fake packet injection.
-// Windows blocks raw TCP sockets, so we bypass via the Npcap driver.
 type pcapRawSocket struct {
 	handle *pcap.Handle
+	srcMAC net.HardwareAddr
+	dstMAC net.HardwareAddr
 }
 
 func New() (RawSocket, error) {
@@ -27,17 +29,22 @@ func New() (RawSocket, error) {
 		return nil, fmt.Errorf("pcap open %s: %w (is Npcap installed?)", iface, err)
 	}
 
-	return &pcapRawSocket{handle: handle}, nil
+	srcMAC, dstMAC := discoverMACs()
+
+	return &pcapRawSocket{handle: handle, srcMAC: srcMAC, dstMAC: dstMAC}, nil
 }
 
 func (s *pcapRawSocket) SendFake(conn ConnInfo, payload []byte, ttl int) error {
-	// Build IP+TCP packet (same as Linux/macOS).
 	ipTcp := BuildPacket(conn, payload, ttl)
 
-	// pcap_sendpacket needs an Ethernet frame. Construct a minimal one.
-	eth := buildEthernetFrame(ipTcp)
+	frame := make([]byte, 14+len(ipTcp))
+	copy(frame[0:6], s.dstMAC)
+	copy(frame[6:12], s.srcMAC)
+	frame[12] = 0x08
+	frame[13] = 0x00
+	copy(frame[14:], ipTcp)
 
-	return s.handle.WritePacketData(eth)
+	return s.handle.WritePacketData(frame)
 }
 
 func (s *pcapRawSocket) Close() error {
@@ -45,20 +52,71 @@ func (s *pcapRawSocket) Close() error {
 	return nil
 }
 
-func buildEthernetFrame(payload []byte) []byte {
-	// Minimal Ethernet frame: dst(6) + src(6) + type(2) + payload
-	// Use broadcast dst MAC — the router will accept it.
-	frame := make([]byte, 14+len(payload))
-	// Dst MAC: broadcast
-	for i := 0; i < 6; i++ {
-		frame[i] = 0xff
+// discoverMACs finds the local NIC MAC and gateway MAC from the ARP table.
+func discoverMACs() (srcMAC, dstMAC net.HardwareAddr) {
+	// Default fallback: broadcast dst, zero src.
+	srcMAC = net.HardwareAddr{0, 0, 0, 0, 0, 0}
+	dstMAC = net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+
+	// Find local NIC MAC.
+	ifaces, _ := net.Interfaces()
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 || len(iface.HardwareAddr) == 0 {
+			continue
+		}
+		addrs, _ := iface.Addrs()
+		for _, a := range addrs {
+			if ipNet, ok := a.(*net.IPNet); ok {
+				if ipv4 := ipNet.IP.To4(); ipv4 != nil && !ipv4.IsLoopback() && !ipv4.Equal(net.IPv4(10, 0, 85, 1)) {
+					srcMAC = iface.HardwareAddr
+					// Find gateway MAC from ARP table.
+					if gwMAC := gatewayMAC(ipv4); gwMAC != nil {
+						dstMAC = gwMAC
+					}
+					return
+				}
+			}
+		}
 	}
-	// Src MAC: zero (will be filled by NIC)
-	// EtherType: IPv4 (0x0800)
-	frame[12] = 0x08
-	frame[13] = 0x00
-	copy(frame[14:], payload)
-	return frame
+	return
+}
+
+// gatewayMAC finds the default gateway's MAC address from the ARP table.
+func gatewayMAC(localIP net.IP) net.HardwareAddr {
+	// Find default gateway IP.
+	out, err := exec.Command("cmd", "/c", "route", "print", "0.0.0.0").CombinedOutput()
+	if err != nil {
+		return nil
+	}
+
+	var gwIP string
+	for _, line := range strings.Split(string(out), "\n") {
+		fields := strings.Fields(strings.TrimSpace(line))
+		if len(fields) >= 3 && fields[0] == "0.0.0.0" && fields[1] == "0.0.0.0" {
+			gwIP = fields[2]
+			break
+		}
+	}
+	if gwIP == "" {
+		return nil
+	}
+
+	// Look up gateway MAC in ARP table.
+	out, err = exec.Command("arp", "-a").CombinedOutput()
+	if err != nil {
+		return nil
+	}
+
+	for _, line := range strings.Split(string(out), "\n") {
+		fields := strings.Fields(strings.TrimSpace(line))
+		if len(fields) >= 2 && fields[0] == gwIP {
+			mac, err := net.ParseMAC(strings.ReplaceAll(fields[1], "-", ":"))
+			if err == nil {
+				return mac
+			}
+		}
+	}
+	return nil
 }
 
 func defaultInterface() (string, error) {
@@ -70,7 +128,6 @@ func defaultInterface() (string, error) {
 	for _, dev := range devs {
 		for _, addr := range dev.Addresses {
 			if ip := addr.IP.To4(); ip != nil && !ip.IsLoopback() {
-				// Skip TUN addresses.
 				if ip.Equal(net.IPv4(10, 0, 85, 1)) {
 					continue
 				}

@@ -62,10 +62,6 @@ sudo ./gecit run
 # Windows (amd64) — requires Npcap (npcap.com)
 curl -L https://github.com/boratanrikulu/gecit/releases/latest/download/gecit-windows-amd64.exe -o gecit.exe
 gecit.exe run
-
-# Windows (arm64) — requires Npcap (npcap.com)
-curl -L https://github.com/boratanrikulu/gecit/releases/latest/download/gecit-windows-arm64.exe -o gecit.exe
-gecit.exe run
 ```
 
 ### Building from source
@@ -81,7 +77,6 @@ make gecit-linux-arm64    # Linux ARM64
 make gecit-darwin-arm64   # macOS Apple Silicon
 make gecit-darwin-amd64   # macOS Intel
 make gecit-windows-amd64  # Windows x86_64 (requires Npcap SDK)
-make gecit-windows-arm64  # Windows ARM64 (requires Npcap SDK)
 
 sudo ./bin/gecit-linux-arm64 run
 ```

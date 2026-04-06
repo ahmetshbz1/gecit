@@ -210,6 +210,8 @@ func (m *Manager) tunOptions() tun.Options {
 		AutoRoute:        true,
 		InterfaceMonitor: m.ifaceMonitor,
 		InterfaceFinder:  m.ifaceFinder,
+		// Point TUN DNS to our DoH server so Windows doesn't use TUN peer as DNS.
+		DNSServers: []netip.Addr{netip.MustParseAddr("127.0.0.1")},
 		// Prevent DoH upstream from routing through TUN (DNS loop).
 		Inet4RouteExcludeAddress: []netip.Prefix{
 			netip.MustParsePrefix("1.1.1.1/32"),
