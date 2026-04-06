@@ -97,6 +97,10 @@ jobs:
         run: |
           curl -sL https://npcap.com/dist/npcap-sdk-1.13.zip -o npcap-sdk.zip
           unzip -q npcap-sdk.zip -d npcap-sdk
+          echo "=== Npcap SDK structure ==="
+          find npcap-sdk -type f | head -20
+          echo "=== pcap.h location ==="
+          find npcap-sdk -name "pcap.h"
 
       - name: Build
         env:
@@ -113,10 +117,17 @@ jobs:
           if [ -n "${{ matrix.zig_target }}" ]; then
             export CC="zig cc -target ${{ matrix.zig_target }}"
             export CXX="zig c++ -target ${{ matrix.zig_target }}"
-            export CGO_CFLAGS="-I$(pwd)/npcap-sdk/Include"
-            LIB_DIR="x64"
-            if [ "${{ matrix.arch }}" = "arm64" ]; then LIB_DIR="ARM64"; fi
-            export CGO_LDFLAGS="-L$(pwd)/npcap-sdk/Lib/${LIB_DIR} -lwpcap"
+            # Find Npcap SDK Include directory (may be nested).
+            NPCAP_INC=$(dirname "$(find npcap-sdk -name 'pcap.h' -not -path '*/pcap/*' | head -1)")
+            NPCAP_LIB="$(pwd)/npcap-sdk/Lib/x64"
+            if [ "${{ matrix.arch }}" = "arm64" ]; then
+              NPCAP_LIB="$(pwd)/npcap-sdk/Lib/ARM64"
+            fi
+            export CGO_CFLAGS="-I${NPCAP_INC}"
+            export CGO_LDFLAGS="-L${NPCAP_LIB} -lwpcap"
+            echo "CC=$CC"
+            echo "CGO_CFLAGS=$CGO_CFLAGS"
+            echo "CGO_LDFLAGS=$CGO_LDFLAGS"
           fi
 
           go build -ldflags="-s -w" $TAGS -o gecit-${{ matrix.os }}-${{ matrix.arch }}${EXT} ./cmd/gecit
