@@ -2,7 +2,7 @@
 
 DPI bypass tool. Injects fake TLS ClientHello packets to desynchronize Deep Packet Inspection middleboxes. Includes built-in DoH DNS resolver.
 
-**Linux**: eBPF sock_ops — hooks directly into the kernel TCP stack. No proxy, no traffic redirection.
+**Linux**: eBPF sock_ops — hooks directly into the kernel TCP stack. No proxy, no traffic redirection.  
 **macOS/Windows**: TUN-based transparent proxy — intercepts all traffic at the IP layer via a virtual network interface.
 
 ```
