@@ -32,7 +32,7 @@ struct ContentView: View {
             }
             .padding(20)
         }
-        .frame(width: 540, height: 500)
+        .frame(width: 360, height: 500)
         .focusable(false)
         .animation(.spring(response: 0.32, dampingFraction: 0.82), value: model.status.state)
         .animation(.easeInOut(duration: 0.2), value: model.currentPage)
@@ -105,7 +105,7 @@ struct ContentView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     Text(model.logs.isEmpty ? "Henüz log yok." : model.logs)
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
                         .foregroundStyle(theme.textSecondary)
                         .textSelection(.enabled)
                         .lineSpacing(2)
@@ -178,7 +178,7 @@ struct ContentView: View {
                 .foregroundStyle(enabled ? theme.primaryButtonText : theme.disabledButtonText)
                 .opacity(spinning ? 0.96 : 1)
             }
-            .frame(width: 120, height: 120)
+            .frame(width: 104, height: 104)
             .shadow(color: buttonColor.opacity(colorScheme == .dark ? 0.28 : 0.16), radius: spinning ? 24 : 18, y: spinning ? 12 : 10)
         }
         .buttonStyle(ScaleButtonStyle())
