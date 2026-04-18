@@ -47,8 +47,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "shield.lefthalf.filled", accessibilityDescription: "geçit")
-            button.imagePosition = .imageLeading
-            button.title = " geçit"
             button.action = #selector(togglePopover)
             button.target = self
         }

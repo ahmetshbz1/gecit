@@ -42,6 +42,22 @@ struct ContentView: View {
 
     private var mainPage: some View {
         VStack(alignment: .leading, spacing: 18) {
+            HStack {
+                Spacer()
+                Button {
+                    model.currentPage = .settings
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(theme.textPrimary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(theme.card, in: Capsule())
+                }
+                .buttonStyle(ScaleButtonStyle())
+                .focusEffectDisabled()
+            }
+
             primaryActionSection
 
             VStack(alignment: .leading, spacing: 10) {
@@ -208,7 +224,7 @@ struct ContentView: View {
     }
 
     private var secondaryActionsRow: some View {
-        HStack(spacing: 10) {
+        HStack {
             Spacer()
             Button {
                 model.currentPage = .logs
@@ -222,20 +238,6 @@ struct ContentView: View {
             }
             .buttonStyle(ScaleButtonStyle())
             .focusEffectDisabled()
-
-            Button {
-                model.currentPage = .settings
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(theme.textPrimary)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(theme.card, in: Capsule())
-            }
-            .buttonStyle(ScaleButtonStyle())
-            .focusEffectDisabled()
-            Spacer()
         }
         .frame(maxWidth: .infinity)
     }
