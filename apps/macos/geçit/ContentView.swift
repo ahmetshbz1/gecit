@@ -212,31 +212,19 @@ struct ContentView: View {
 
     private var headerActions: some View {
         HStack(spacing: 10) {
-            Button {
+            HoverCapsuleButton(helpText: "Loglar", action: {
                 model.currentPage = .logs
-            } label: {
+            }) {
                 Image(systemName: "doc.text.magnifyingglass")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(theme.textPrimary)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(theme.card, in: Capsule())
             }
-            .buttonStyle(ScaleButtonStyle())
-            .focusEffectDisabled()
 
-            Button {
+            HoverCapsuleButton(helpText: "Ayarlar", action: {
                 model.currentPage = .settings
-            } label: {
+            }) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(theme.textPrimary)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(theme.card, in: Capsule())
             }
-            .buttonStyle(ScaleButtonStyle())
-            .focusEffectDisabled()
         }
     }
 
