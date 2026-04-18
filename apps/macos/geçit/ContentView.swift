@@ -104,13 +104,10 @@ struct ContentView: View {
 
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 0) {
-                        Text(model.logs.isEmpty ? "Henüz log yok." : model.logs)
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundStyle(theme.textSecondary)
-                            .textSelection(.enabled)
-                            .lineSpacing(2)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        ForEach(logEntries, id: \.self) { entry in
+                            logRow(entry)
+                        }
                         Color.clear
                             .frame(height: 1)
                             .id("logs-bottom")
@@ -208,6 +205,60 @@ struct ContentView: View {
         default:
             return model.primaryActionSymbol == "stop.fill" ? theme.primaryButtonStop : theme.primaryButtonStart
         }
+    }
+
+    private var logEntries: [String] {
+        let lines = model.logs
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map(String.init)
+        return lines.isEmpty ? ["Henüz log yok."] : lines
+    }
+
+    @ViewBuilder
+    private func logRow(_ entry: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Circle()
+                .fill(logAccent(for: entry))
+                .frame(width: 7, height: 7)
+                .padding(.top, 6)
+
+            Text(entry.isEmpty ? " " : entry)
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .foregroundStyle(logTextColor(for: entry))
+                .textSelection(.enabled)
+                .lineSpacing(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 2)
+    }
+
+    private func logAccent(for entry: String) -> Color {
+        if entry.contains("level=error") || entry.contains("error") {
+            return .red
+        }
+        if entry.contains("level=info") || entry.contains("injected") || entry.contains("running") {
+            return .green
+        }
+        if entry.contains("level=debug") || entry.contains("resolved") {
+            return .blue
+        }
+        if entry.contains("warning") || entry.contains("stopping") || entry.contains("starting") {
+            return .orange
+        }
+        return theme.textMuted
+    }
+
+    private func logTextColor(for entry: String) -> Color {
+        if entry.contains("level=error") || entry.contains("error") {
+            return colorScheme == .dark ? Color.red.opacity(0.95) : Color.red.opacity(0.85)
+        }
+        if entry.contains("level=info") || entry.contains("injected") || entry.contains("running") {
+            return theme.textPrimary
+        }
+        if entry.contains("level=debug") || entry.contains("resolved") {
+            return theme.textSecondary
+        }
+        return theme.textSecondary
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
