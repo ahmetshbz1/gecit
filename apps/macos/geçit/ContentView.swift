@@ -44,18 +44,7 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack {
                 Spacer()
-                Button {
-                    model.currentPage = .settings
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(theme.textPrimary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(theme.card, in: Capsule())
-                }
-                .buttonStyle(ScaleButtonStyle())
-                .focusEffectDisabled()
+                headerActions
             }
 
             primaryActionSection
@@ -72,8 +61,6 @@ struct ContentView: View {
             }
             .padding(16)
             .background(theme.card, in: RoundedRectangle(cornerRadius: 18))
-
-            secondaryActionsRow
 
             Spacer()
         }
@@ -223,14 +210,26 @@ struct ContentView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private var secondaryActionsRow: some View {
-        HStack {
-            Spacer()
+    private var headerActions: some View {
+        HStack(spacing: 10) {
             Button {
                 model.currentPage = .logs
             } label: {
-                Label("Loglar", systemImage: "doc.text.magnifyingglass")
-                    .font(.system(size: 13, weight: .semibold))
+                Image(systemName: "doc.text.magnifyingglass")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(theme.textPrimary)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(theme.card, in: Capsule())
+            }
+            .buttonStyle(ScaleButtonStyle())
+            .focusEffectDisabled()
+
+            Button {
+                model.currentPage = .settings
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(theme.textPrimary)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
@@ -239,7 +238,6 @@ struct ContentView: View {
             .buttonStyle(ScaleButtonStyle())
             .focusEffectDisabled()
         }
-        .frame(maxWidth: .infinity)
     }
 
     private var badgeForeground: Color {
