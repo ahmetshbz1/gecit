@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HoverCapsuleButton<Label: View>: View {
+    @Environment(\.colorScheme) private var colorScheme
     let helpText: String
     let action: () -> Void
     @ViewBuilder let label: () -> Label
@@ -39,11 +40,21 @@ struct HoverCapsuleButton<Label: View>: View {
     private var tooltip: some View {
         Text(helpText)
             .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(Color.white)
+            .foregroundStyle(colorScheme == .dark ? Color.black : Color.white)
             .fixedSize(horizontal: true, vertical: false)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(Color.black.opacity(0.88), in: RoundedRectangle(cornerRadius: 8))
+            .background(tooltipBackground, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(tooltipBorder, lineWidth: 1))
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.10 : 0.24), radius: 8, y: 4)
             .allowsHitTesting(false)
+    }
+
+    private var tooltipBackground: Color {
+        colorScheme == .dark ? Color.white.opacity(0.96) : Color.black.opacity(0.88)
+    }
+
+    private var tooltipBorder: Color {
+        colorScheme == .dark ? Color.black.opacity(0.08) : Color.white.opacity(0.08)
     }
 }
