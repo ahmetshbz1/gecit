@@ -6,13 +6,13 @@ struct OnboardingFooter: View {
     let onPrimaryAction: () -> Void
 
     private var title: String {
-        helperInstalled ? "Kurulum tamam" : "Yönetici izni gerekli"
+        helperInstalled ? "Hazır" : "Yönetici onayı gerekli"
     }
 
     private var description: String {
         helperInstalled
-            ? "Artık her start/stop işleminde şifre istenmeyecek."
-            : "macOS bir kez yönetici onayı isteyecek. Şifre uygulamada saklanmaz."
+            ? "Kurulum tamamlandı."
+            : "macOS bir kez yönetici onayı isteyecek."
     }
 
     private var buttonLabel: String {

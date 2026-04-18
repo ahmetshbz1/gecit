@@ -8,10 +8,6 @@ struct OnboardingHeroSection: View {
             Text("geçit")
                 .font(.system(size: 42, weight: .semibold, design: .rounded))
                 .foregroundStyle(theme.textPrimary)
-
-            Text("Menü barda çalışan, tek tıkla açılıp kapanan macOS istemcisi.")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(theme.textSecondary)
         }
     }
 }

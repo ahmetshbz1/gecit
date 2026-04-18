@@ -6,9 +6,8 @@ struct OnboardingFeatureList: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             OnboardingFeatureRow(text: "Menü bardan başlat / durdur", symbol: "menubar.rectangle", theme: theme)
-            OnboardingFeatureRow(text: "Yetki yalnızca ilk kurulumda alınır", symbol: "lock.shield", theme: theme)
-            OnboardingFeatureRow(text: "Binary arka planda child process olarak çalışır", symbol: "terminal", theme: theme)
-            OnboardingFeatureRow(text: "Temizlik ve durum bilgisi uygulama içinde görünür", symbol: "waveform.path.ecg", theme: theme)
+            OnboardingFeatureRow(text: "İlk kurulum için yönetici onayı gerekir", symbol: "lock.shield", theme: theme)
+            OnboardingFeatureRow(text: "Arka planda güvenli şekilde çalışır", symbol: "terminal", theme: theme)
         }
     }
 }
