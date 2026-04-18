@@ -102,20 +102,31 @@ struct ContentView: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(theme.textPrimary)
 
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    Text(model.logs.isEmpty ? "Henüz log yok." : model.logs)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundStyle(theme.textSecondary)
-                        .textSelection(.enabled)
-                        .lineSpacing(2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        Text(model.logs.isEmpty ? "Henüz log yok." : model.logs)
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundStyle(theme.textSecondary)
+                            .textSelection(.enabled)
+                            .lineSpacing(2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Color.clear
+                            .frame(height: 1)
+                            .id("logs-bottom")
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(14)
+                .background(theme.logBackground, in: RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.textPrimary.opacity(colorScheme == .dark ? 0.08 : 0.06), lineWidth: 1))
+                .onAppear {
+                    scrollToBottom(proxy)
+                }
+                .onChange(of: model.logs) { _, _ in
+                    scrollToBottom(proxy)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(14)
-            .background(theme.logBackground, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.textPrimary.opacity(colorScheme == .dark ? 0.08 : 0.06), lineWidth: 1))
         }
     }
 
@@ -196,6 +207,14 @@ struct ContentView: View {
             return Color.orange
         default:
             return model.primaryActionSymbol == "stop.fill" ? theme.primaryButtonStop : theme.primaryButtonStart
+        }
+    }
+
+    private func scrollToBottom(_ proxy: ScrollViewProxy) {
+        DispatchQueue.main.async {
+            withAnimation(.easeOut(duration: 0.24)) {
+                proxy.scrollTo("logs-bottom", anchor: .bottom)
+            }
         }
     }
 
