@@ -144,6 +144,7 @@ struct GecitHelperInstaller {
         }
 
         start_gecit() {
+          local command="$1"
           if is_running; then
             write_status "running" "Gecit zaten çalışıyor"
             return
@@ -153,7 +154,23 @@ struct GecitHelperInstaller {
             return
           fi
           write_status "starting" "Gecit başlatılıyor"
-          "$BINARY" run -v >> "$LOG_FILE" 2>&1 &
+          local args=(run -v)
+          if [[ "$command" == *"--fake-ttl="* ]]; then
+            args+=("--fake-ttl" "${command#*--fake-ttl=}")
+          fi
+          if [[ "$command" == *"--doh="* ]]; then
+            args+=("--doh" "${command#*--doh=}")
+          fi
+          if [[ "$command" == *"--doh-upstream="* ]]; then
+            args+=("--doh-upstream" "${command#*--doh-upstream=}")
+          fi
+          if [[ "$command" == *"--interface="* ]]; then
+            args+=("--interface" "${command#*--interface=}")
+          fi
+          if [[ "$command" == *"--ports="* ]]; then
+            args+=("--ports" "${command#*--ports=}")
+          fi
+          "$BINARY" "${args[@]}" >> "$LOG_FILE" 2>&1 &
           echo $! > "$PID_FILE"
           sleep 2
           if is_running; then
@@ -181,7 +198,7 @@ struct GecitHelperInstaller {
         handle_command() {
           local command="$1"
           case "$command" in
-            start) start_gecit ;;
+            start*) start_gecit "$command" ;;
             stop) stop_gecit ;;
             cleanup) stop_gecit ;;
             status) if is_running; then write_status "running" "Gecit çalışıyor"; else write_status "stopped" "Gecit durdu"; fi ;;

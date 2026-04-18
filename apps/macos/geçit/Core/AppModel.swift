@@ -1,14 +1,22 @@
 import AppKit
 import Combine
 import Foundation
+import SwiftUI
 
 enum Page {
     case main
     case logs
+    case settings
 }
 
 @MainActor
 final class AppModel: ObservableObject {
+    @AppStorage("settingsFakeTTL") var settingsFakeTTL = 8
+    @AppStorage("settingsDoHEnabled") var settingsDoHEnabled = true
+    static let dohPresets = ["cloudflare", "google", "quad9", "nextdns", "adguard"]
+    @AppStorage("settingsDoHUpstream") var settingsDoHUpstream = "cloudflare"
+    @AppStorage("settingsInterface") var settingsInterface = ""
+    @AppStorage("settingsPorts") var settingsPorts = "443"
     @Published var helperInstalled = false
     @Published var onboardingCompleted = false
     @Published var status: GecitStatus = .empty
@@ -55,7 +63,8 @@ final class AppModel: ObservableObject {
 
     func start() {
         status = GecitStatus(state: .starting, pid: status.pid, message: "Gecit başlatılıyor", updatedAt: status.updatedAt)
-        try? control.send("start")
+        let command = startCommand()
+        try? control.send(command)
         refreshSoon()
     }
 
@@ -145,5 +154,19 @@ final class AppModel: ObservableObject {
         } else {
             start()
         }
+    }
+
+    private func startCommand() -> String {
+        let ttl = max(1, settingsFakeTTL)
+        let doh = settingsDoHEnabled ? "true" : "false"
+        let upstream = settingsDoHUpstream.trimmingCharacters(in: .whitespacesAndNewlines)
+        let iface = settingsInterface.trimmingCharacters(in: .whitespacesAndNewlines)
+        let ports = settingsPorts.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        var parts = ["start", "--fake-ttl=\(ttl)", "--doh=\(doh)"]
+        if !upstream.isEmpty { parts.append("--doh-upstream=\(upstream)") }
+        if !iface.isEmpty { parts.append("--interface=\(iface)") }
+        if !ports.isEmpty { parts.append("--ports=\(ports)") }
+        return parts.joined(separator: " ")
     }
 }

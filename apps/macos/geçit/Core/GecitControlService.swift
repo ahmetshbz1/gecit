@@ -2,7 +2,8 @@ import Foundation
 
 struct GecitControlService {
     func send(_ command: String) throws {
-        guard ["start", "stop", "cleanup", "status"].contains(command) else {
+        let allowedPrefixes = ["start", "stop", "cleanup", "status"]
+        guard allowedPrefixes.contains(where: { command.hasPrefix($0) }) else {
             throw NSError(domain: "GecitControlService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Geçersiz komut"])
         }
         try FileManager.default.createDirectory(atPath: AppPaths.sharedDirectory, withIntermediateDirectories: true)

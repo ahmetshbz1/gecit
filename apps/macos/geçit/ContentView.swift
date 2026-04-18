@@ -28,6 +28,8 @@ struct ContentView: View {
                     mainPage
                 case .logs:
                     logsPage
+                case .settings:
+                    settingsPage
                 }
             }
             .padding(20)
@@ -106,6 +108,73 @@ struct ContentView: View {
         }
     }
 
+    private var settingsPage: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Button {
+                    model.currentPage = .main
+                } label: {
+                    Label("Geri", systemImage: "chevron.left")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(theme.textPrimary)
+                }
+                .buttonStyle(.plain)
+                .focusEffectDisabled()
+
+                Spacer()
+            }
+
+            Text("Ayarlar")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(theme.textPrimary)
+
+            VStack(alignment: .leading, spacing: 14) {
+                settingsField(title: "Fake TTL") {
+                    Stepper(value: $model.settingsFakeTTL, in: 1...64) {
+                        Text("\(model.settingsFakeTTL)")
+                            .foregroundStyle(theme.textPrimary)
+                    }
+                }
+
+                settingsField(title: "DoH") {
+                    Toggle("Etkin", isOn: $model.settingsDoHEnabled)
+                        .toggleStyle(.switch)
+                }
+
+                settingsField(title: "Upstream") {
+                    Picker("Upstream", selection: $model.settingsDoHUpstream) {
+                        ForEach(AppModel.dohPresets, id: \.self) { preset in
+                            Text(preset).tag(preset)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                }
+
+                settingsField(title: "Interface") {
+                    TextField("en0", text: $model.settingsInterface)
+                        .textFieldStyle(.roundedBorder)
+                }
+
+                settingsField(title: "Ports") {
+                    TextField("443 veya 443,8443", text: $model.settingsPorts)
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
+            .padding(16)
+            .background(theme.card, in: RoundedRectangle(cornerRadius: 18))
+        }
+    }
+
+    private func settingsField<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(theme.textMuted)
+            content()
+        }
+    }
+
     private var runtimeBadgeRow: some View {
         HStack(alignment: .center, spacing: 0) {
             Text("Runtime")
@@ -139,13 +208,26 @@ struct ContentView: View {
     }
 
     private var secondaryActionsRow: some View {
-        HStack {
+        HStack(spacing: 10) {
             Spacer()
             Button {
                 model.currentPage = .logs
             } label: {
                 Label("Loglar", systemImage: "doc.text.magnifyingglass")
                     .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(theme.textPrimary)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(theme.card, in: Capsule())
+            }
+            .buttonStyle(ScaleButtonStyle())
+            .focusEffectDisabled()
+
+            Button {
+                model.currentPage = .settings
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(theme.textPrimary)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
