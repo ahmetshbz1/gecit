@@ -40,43 +40,21 @@ struct ContentView: View {
 
     private var mainPage: some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .top) {
-                Spacer()
-                statusBadge
-            }
-
-            HStack {
-                Spacer()
-                primaryActionButton(title: model.primaryActionTitle, symbol: model.primaryActionSymbol, enabled: true) {
-                    model.performPrimaryAction()
-                }
-                Spacer()
-            }
+            primaryActionSection
 
             VStack(alignment: .leading, spacing: 10) {
                 Text("Durum")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(theme.textPrimary)
                 infoRow("Servis", model.helperInstalled ? "Hazır" : "Yeniden kurulum gerekli")
-                infoRow("Runtime", model.statusTitle)
+                runtimeBadgeRow
                 infoRow("PID", model.status.pid.map(String.init) ?? "—")
                 infoRow("Mesaj", model.status.message)
             }
             .padding(16)
             .background(theme.card, in: RoundedRectangle(cornerRadius: 18))
 
-            Button {
-                model.currentPage = .logs
-            } label: {
-                Label("Loglar", systemImage: "doc.text.magnifyingglass")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(theme.textPrimary)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(theme.card, in: Capsule())
-            }
-            .buttonStyle(ScaleButtonStyle())
-            .focusEffectDisabled()
+            secondaryActionsRow
 
             Spacer()
         }
@@ -128,14 +106,56 @@ struct ContentView: View {
         }
     }
 
-    private var statusBadge: some View {
-        Text(model.statusTitle)
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(badgeForeground)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(badgeBackground, in: Capsule())
-            .animation(.easeInOut(duration: 0.22), value: model.status.state)
+    private var runtimeBadgeRow: some View {
+        HStack(alignment: .center, spacing: 0) {
+            Text("Runtime")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(theme.textMuted)
+                .frame(width: 72, alignment: .leading)
+
+            HStack {
+                Text(model.statusTitle)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(badgeForeground)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(badgeBackground, in: Capsule())
+                    .animation(.easeInOut(duration: 0.22), value: model.status.state)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var primaryActionSection: some View {
+        HStack {
+            Spacer()
+            primaryActionButton(title: model.primaryActionTitle, symbol: model.primaryActionSymbol, enabled: true) {
+                model.performPrimaryAction()
+            }
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var secondaryActionsRow: some View {
+        HStack {
+            Spacer()
+            Button {
+                model.currentPage = .logs
+            } label: {
+                Label("Loglar", systemImage: "doc.text.magnifyingglass")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(theme.textPrimary)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(theme.card, in: Capsule())
+            }
+            .buttonStyle(ScaleButtonStyle())
+            .focusEffectDisabled()
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private var badgeForeground: Color {
