@@ -20,6 +20,8 @@ struct GecitControlService {
         guard let text = try? String(contentsOfFile: AppPaths.logFile, encoding: .utf8) else {
             return "Henüz log yok."
         }
-        return String(text.suffix(6000))
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        let tail = lines.suffix(200)
+        return tail.joined(separator: "\n")
     }
 }
