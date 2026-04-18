@@ -104,6 +104,14 @@ final class AppModel: ObservableObject {
         runtime.refresh()
     }
 
+    func startObserving() {
+        runtime.startObserving()
+    }
+
+    func stopObserving() {
+        runtime.stopObserving()
+    }
+
     var statusTitle: String {
         runtime.statusTitle
     }

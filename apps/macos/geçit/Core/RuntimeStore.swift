@@ -3,17 +3,25 @@ import Foundation
 
 @MainActor
 final class RuntimeStore: ObservableObject {
+    let objectWillChange = ObservableObjectPublisher()
     @Published var helperInstalled = false
     @Published var onboardingCompleted = false
     @Published var status: GecitStatus = .empty
     @Published var logs = "Henüz log yok."
     @Published var installError: String?
-    @Published var currentPage: Page = .main
+    @Published var currentPage: Page = .main {
+        didSet {
+            handlePageChange(from: oldValue, to: currentPage)
+        }
+    }
 
     private let installer: GecitHelperInstaller
     private let control: GecitControlService
     private var timer: Timer?
+    private var pollingInterval: TimeInterval?
+    private var isObserving = false
     private var lastStatusSignature = ""
+    private var lastLogsSignature = ""
 
     init(installer: GecitHelperInstaller? = nil, control: GecitControlService? = nil) {
         self.installer = installer ?? GecitHelperInstaller()
@@ -21,7 +29,6 @@ final class RuntimeStore: ObservableObject {
         onboardingCompleted = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
         helperInstalled = self.installer.isInstalled()
         refresh()
-        startPolling()
     }
 
     deinit {
@@ -38,7 +45,7 @@ final class RuntimeStore: ObservableObject {
             if helperInstalled {
                 UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
                 try? control.send("status")
-                refresh()
+                refresh(includeLogs: true)
                 NSLog("gecit install succeeded")
             } else {
                 installError = "Kurulum tamamlanmadı. Yönetici onayı penceresi kapanmış olabilir."
@@ -53,49 +60,105 @@ final class RuntimeStore: ObservableObject {
         status = GecitStatus(state: .starting, pid: status.pid, message: "Gecit başlatılıyor", updatedAt: status.updatedAt)
         let command = RuntimeCommandBuilder.buildStartCommand(settings: settings)
         try? control.send(command)
-        refreshSoon()
+        refreshSoon(includeLogs: true)
     }
 
     func stop() {
         status = GecitStatus(state: .stopping, pid: status.pid, message: "Gecit durduruluyor", updatedAt: status.updatedAt)
         try? control.send("stop")
-        refreshSoon()
+        refreshSoon(includeLogs: true)
     }
 
     func cleanup() {
         try? control.send("cleanup")
-        refreshSoon()
+        stopObserving()
+        refreshSoon(includeLogs: false)
+    }
+
+    func startObserving() {
+        isObserving = true
+        refresh()
+        schedulePolling(force: true)
+    }
+
+    func stopObserving() {
+        isObserving = false
+        timer?.invalidate()
+        timer = nil
+        pollingInterval = nil
     }
 
     func refresh() {
+        refresh(includeLogs: nil)
+    }
+
+    func refresh(includeLogs: Bool?) {
+        refreshStatus()
+        if includeLogs ?? shouldReadLogs {
+            refreshLogs()
+        }
+    }
+
+    private func refreshStatus() {
         helperInstalled = installer.isInstalled()
         let nextStatus = control.readStatus()
         if !helperInstalled && nextStatus.state == .error && nextStatus.message == "Gecit başlatılamadı" {
             installError = "Helper güncellendi. Bir kez daha 'Yeniden Kur' ile kurulumu tazele."
         }
-        let nextLogs = control.readLogs()
-        let signature = "\(nextStatus.state.rawValue)|\(nextStatus.pid ?? -1)|\(nextStatus.message)|\(nextLogs.hashValue)"
+        let signature = "\(nextStatus.state.rawValue)|\(nextStatus.pid ?? -1)|\(nextStatus.message)|\(nextStatus.updatedAt)"
         guard signature != lastStatusSignature else { return }
         lastStatusSignature = signature
         status = nextStatus
+    }
+
+    private func refreshLogs() {
+        let nextLogs = control.readLogs()
+        let signature = String(nextLogs.hashValue)
+        guard signature != lastLogsSignature else { return }
+        lastLogsSignature = signature
         logs = nextLogs
     }
 
-    private func startPolling() {
-        timer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
+    private var shouldReadLogs: Bool {
+        currentPage == .logs
+    }
+
+    private var targetPollingInterval: TimeInterval {
+        shouldReadLogs ? 2 : 4
+    }
+
+    private func handlePageChange(from oldPage: Page, to newPage: Page) {
+        guard oldPage != newPage else { return }
+        if newPage == .logs {
+            refreshLogs()
+        }
+        if isObserving {
+            schedulePolling(force: true)
+        }
+    }
+
+    private func schedulePolling(force: Bool) {
+        guard isObserving else { return }
+        let interval = targetPollingInterval
+        guard force || timer == nil || pollingInterval != interval else { return }
+        timer?.invalidate()
+        pollingInterval = interval
+        let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor [weak self] in
                 self?.refresh()
             }
         }
+        timer.tolerance = interval * 0.35
+        self.timer = timer
     }
 
-    private func refreshSoon() {
+    private func refreshSoon(includeLogs: Bool) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
-            self?.refresh()
+            self?.refresh(includeLogs: includeLogs)
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
-            self?.refresh()
+            self?.refresh(includeLogs: includeLogs)
         }
     }
 

@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         eventMonitor?.stop()
+        model.stopObserving()
         model.cleanup()
     }
 
@@ -36,6 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showOnboarding() {
         NSApp.setActivationPolicy(.regular)
+        model.startObserving()
         let controller = OnboardingWindowController(model: model) { [weak self] in
             self?.handleOnboardingCompletion()
         }
@@ -101,6 +103,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showPopover() {
         guard let button = statusItem?.button, let popover else { return }
+        model.startObserving()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         eventMonitor?.start()
         activateAndFocus(popover: popover)
@@ -118,6 +121,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func closePopover() {
         popover?.performClose(nil)
         eventMonitor?.stop()
+        model.stopObserving()
     }
 
     @objc private func quitApp() {
