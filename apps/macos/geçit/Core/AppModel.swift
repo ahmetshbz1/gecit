@@ -64,6 +64,10 @@ final class AppModel: ObservableObject {
         set { runtime.onboardingCompleted = newValue }
     }
 
+    var shouldShowOnboardingOnLaunch: Bool {
+        runtime.shouldShowOnboardingOnLaunch
+    }
+
     var status: GecitStatus {
         get { runtime.status }
         set { runtime.status = newValue }

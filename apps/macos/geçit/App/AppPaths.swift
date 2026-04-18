@@ -2,6 +2,7 @@ import Foundation
 
 enum AppPaths {
     static let helperVersion = "3"
+    static let onboardingVersion = "1"
     static let helperIdentifier = "com.ahmetshbz.gecit.helper"
     static let helperScriptPath = "/Library/Application Support/Gecit/gecit-helper.sh"
     static let helperPlistPath = "/Library/LaunchDaemons/\(helperIdentifier).plist"

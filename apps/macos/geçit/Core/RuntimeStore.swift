@@ -22,11 +22,13 @@ final class RuntimeStore: ObservableObject {
     private var lastStatusSignature = ""
     private var lastLogsSignature = ""
 
+    private static let completedOnboardingVersionKey = "completedOnboardingVersion"
+
     init(installer: GecitHelperInstaller? = nil, control: GecitControlService? = nil) {
         self.installer = installer ?? GecitHelperInstaller()
         self.control = control ?? GecitControlService()
-        onboardingCompleted = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
         helperInstalled = self.installer.isInstalled()
+        onboardingCompleted = helperInstalled && storedOnboardingVersion == AppPaths.onboardingVersion
         refresh()
     }
 
@@ -42,7 +44,7 @@ final class RuntimeStore: ObservableObject {
             helperInstalled = installer.isInstalled()
             onboardingCompleted = helperInstalled
             if helperInstalled {
-                UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+                storedOnboardingVersion = AppPaths.onboardingVersion
                 try? control.send("status")
                 refresh(includeLogs: true)
                 NSLog("gecit install succeeded")
@@ -91,6 +93,15 @@ final class RuntimeStore: ObservableObject {
         currentPage = .main
         logs = "Henüz log yok."
         lastLogsSignature = ""
+    }
+
+    var shouldShowOnboardingOnLaunch: Bool {
+        !helperInstalled || storedOnboardingVersion != AppPaths.onboardingVersion
+    }
+
+    private var storedOnboardingVersion: String? {
+        get { UserDefaults.standard.string(forKey: Self.completedOnboardingVersionKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.completedOnboardingVersionKey) }
     }
 
     func refresh() {

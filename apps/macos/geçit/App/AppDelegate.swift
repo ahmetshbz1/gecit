@@ -10,11 +10,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var onboardingController: OnboardingWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        if model.onboardingCompleted {
+        if model.shouldShowOnboardingOnLaunch {
+            showOnboarding()
+        } else {
             NSApp.setActivationPolicy(.accessory)
             launchMainApp()
-        } else {
-            showOnboarding()
         }
     }
 
