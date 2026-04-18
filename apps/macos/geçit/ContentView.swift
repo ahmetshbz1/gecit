@@ -64,23 +64,7 @@ struct ContentView: View {
 
     private var logsPage: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Button {
-                    model.currentPage = .main
-                } label: {
-                    Label("Geri", systemImage: "chevron.left")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(theme.textPrimary)
-                }
-                .buttonStyle(.plain)
-                .focusEffectDisabled()
-
-                Spacer()
-            }
-
-            Text("Loglar")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(theme.textPrimary)
+            pageHeader(title: "Loglar")
 
             ScrollViewReader { proxy in
                 ScrollView {
@@ -110,30 +94,12 @@ struct ContentView: View {
 
     private var settingsPage: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Button {
-                    model.currentPage = .main
-                } label: {
-                    Label("Geri", systemImage: "chevron.left")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(theme.textPrimary)
-                }
-                .buttonStyle(.plain)
-                .focusEffectDisabled()
+            pageHeader(title: "Ayarlar")
 
-                Spacer()
-            }
-
-            Text("Ayarlar")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(theme.textPrimary)
-
-            VStack(alignment: .leading, spacing: 14) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
                 settingsField(title: "Fake TTL") {
-                    Stepper(value: $model.settingsFakeTTL, in: 1...64) {
-                        Text("\(model.settingsFakeTTL)")
-                            .foregroundStyle(theme.textPrimary)
-                    }
+                    NativeStepperField(value: $model.settingsFakeTTL, minValue: 1, maxValue: 64)
                 }
 
                 settingsField(title: "DoH") {
@@ -144,11 +110,12 @@ struct ContentView: View {
                 settingsField(title: "Upstream") {
                     Picker("Upstream", selection: $model.settingsDoHUpstream) {
                         ForEach(AppModel.dohPresets, id: \.self) { preset in
-                            Text(preset).tag(preset)
+                            Text(preset.capitalized).tag(preset)
                         }
                     }
-                    .labelsHidden()
                     .pickerStyle(.menu)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 settingsField(title: "Interface") {
@@ -163,6 +130,8 @@ struct ContentView: View {
             }
             .padding(16)
             .background(theme.card, in: RoundedRectangle(cornerRadius: 18))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
@@ -172,6 +141,28 @@ struct ContentView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(theme.textMuted)
             content()
+        }
+    }
+
+    private func pageHeader(title: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Button {
+                    model.currentPage = .main
+                } label: {
+                    Label("Geri", systemImage: "chevron.left")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(theme.textPrimary)
+                }
+                .buttonStyle(.plain)
+                .focusEffectDisabled()
+
+                Spacer()
+            }
+
+            Text(title)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(theme.textPrimary)
         }
     }
 
