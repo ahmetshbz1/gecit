@@ -20,13 +20,8 @@ struct HoverCapsuleButton<Label: View>: View {
         .focusEffectDisabled()
         .overlay(alignment: .bottom) {
             if isHovered {
-                Text(helpText)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Color.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(Color.black.opacity(0.88), in: RoundedRectangle(cornerRadius: 8))
-                    .offset(y: 34)
+                tooltip
+                    .offset(y: 38)
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
             }
         }
@@ -39,5 +34,16 @@ struct HoverCapsuleButton<Label: View>: View {
 
     private var backgroundColor: Color {
         isHovered ? Color.primary.opacity(0.10) : Color.primary.opacity(0.06)
+    }
+
+    private var tooltip: some View {
+        Text(helpText)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundStyle(Color.white)
+            .fixedSize(horizontal: true, vertical: false)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.black.opacity(0.88), in: RoundedRectangle(cornerRadius: 8))
+            .allowsHitTesting(false)
     }
 }
