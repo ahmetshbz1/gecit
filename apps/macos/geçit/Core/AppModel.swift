@@ -1,0 +1,115 @@
+import AppKit
+import Combine
+import Foundation
+
+@MainActor
+final class AppModel: ObservableObject {
+    @Published var helperInstalled = false
+    @Published var onboardingCompleted = false
+    @Published var status: GecitStatus = .empty
+    @Published var logs = "Henüz log yok."
+    @Published var installError: String?
+
+    private let installer = GecitHelperInstaller()
+    private let control = GecitControlService()
+    private var timer: Timer?
+    private var lastStatusSignature = ""
+
+    init() {
+        onboardingCompleted = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+        helperInstalled = installer.isInstalled()
+        refresh()
+        startPolling()
+    }
+
+    deinit {
+        timer?.invalidate()
+    }
+
+    func installHelper() {
+        installError = nil
+        NSLog("gecit install requested")
+        do {
+            try installer.install()
+            helperInstalled = installer.isInstalled()
+            onboardingCompleted = helperInstalled
+            if helperInstalled {
+                UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+                try? control.send("status")
+                refresh()
+                NSLog("gecit install succeeded")
+            } else {
+                installError = "Kurulum tamamlanmadı. Yönetici onayı penceresi kapanmış olabilir."
+            }
+        } catch {
+            NSLog("gecit install failed: %@", error.localizedDescription)
+            installError = error.localizedDescription
+        }
+    }
+
+    func start() {
+        try? control.send("start")
+        refreshSoon()
+    }
+
+    func stop() {
+        try? control.send("stop")
+        refreshSoon()
+    }
+
+    func cleanup() {
+        try? control.send("cleanup")
+        refreshSoon()
+    }
+
+    func refresh() {
+        helperInstalled = installer.isInstalled()
+        let nextStatus = control.readStatus()
+        if !helperInstalled && nextStatus.state == .error && nextStatus.message == "Gecit başlatılamadı" {
+            installError = "Helper güncellendi. Bir kez daha 'Yeniden Kur' ile kurulumu tazele."
+        }
+        let nextLogs = control.readLogs()
+        let signature = "\(nextStatus.state.rawValue)|\(nextStatus.pid ?? -1)|\(nextStatus.message)|\(nextLogs.hashValue)"
+        guard signature != lastStatusSignature else { return }
+        lastStatusSignature = signature
+        status = nextStatus
+        logs = nextLogs
+    }
+
+    private func startPolling() {
+        timer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.refresh()
+            }
+        }
+    }
+
+    private func refreshSoon() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            self?.refresh()
+        }
+    }
+
+    var statusTitle: String {
+        switch status.state {
+        case .onboarding: return "Kurulum gerekli"
+        case .stopped: return "Durduruldu"
+        case .starting: return "Başlatılıyor"
+        case .running: return "Çalışıyor"
+        case .stopping: return "Durduruluyor"
+        case .error: return "Hata"
+        }
+    }
+
+    var canStart: Bool {
+        helperInstalled && status.state != .running && status.state != .starting
+    }
+
+    var needsHelperReinstall: Bool {
+        !helperInstalled
+    }
+
+    var canStop: Bool {
+        helperInstalled && (status.state == .running || status.state == .starting || status.state == .error)
+    }
+}
