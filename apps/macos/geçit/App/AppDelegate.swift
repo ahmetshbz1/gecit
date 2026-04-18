@@ -71,7 +71,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentSize = NSSize(width: 360, height: 500)
         popover.behavior = .transient
         popover.animates = true
-        popover.contentViewController = makePopoverContentController()
         self.popover = popover
     }
 
@@ -104,6 +103,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showPopover() {
         guard let button = statusItem?.button, let popover else { return }
         model.startObserving()
+        if popover.contentViewController == nil {
+            popover.contentViewController = makePopoverContentController()
+        }
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         eventMonitor?.start()
         activateAndFocus(popover: popover)
@@ -120,8 +122,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func closePopover() {
         popover?.performClose(nil)
+        popover?.contentViewController = nil
         eventMonitor?.stop()
         model.stopObserving()
+        model.resetTransientState()
     }
 
     @objc private func quitApp() {

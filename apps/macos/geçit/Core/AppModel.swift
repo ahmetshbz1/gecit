@@ -112,6 +112,10 @@ final class AppModel: ObservableObject {
         runtime.stopObserving()
     }
 
+    func resetTransientState() {
+        runtime.resetTransientState()
+    }
+
     var statusTitle: String {
         runtime.statusTitle
     }

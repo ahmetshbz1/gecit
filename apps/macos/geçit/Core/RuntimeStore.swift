@@ -87,6 +87,12 @@ final class RuntimeStore: ObservableObject {
         pollingInterval = nil
     }
 
+    func resetTransientState() {
+        currentPage = .main
+        logs = "Henüz log yok."
+        lastLogsSignature = ""
+    }
+
     func refresh() {
         refresh(includeLogs: nil)
     }
