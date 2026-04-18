@@ -22,48 +22,12 @@ struct ContentView: View {
             LinearGradient(colors: [theme.backgroundAccent, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 18) {
-                HStack(alignment: .top) {
-                    Spacer()
-                    statusBadge
-                }
-
-                HStack {
-                    Spacer()
-                    primaryActionButton(title: model.primaryActionTitle, symbol: model.primaryActionSymbol, enabled: true) {
-                        model.performPrimaryAction()
-                    }
-                    Spacer()
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Durum")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(theme.textPrimary)
-                    infoRow("Servis", model.helperInstalled ? "Hazır" : "Yeniden kurulum gerekli")
-                    infoRow("Runtime", model.statusTitle)
-                    infoRow("PID", model.status.pid.map(String.init) ?? "—")
-                    infoRow("Mesaj", model.status.message)
-                }
-                .padding(16)
-                .background(theme.card, in: RoundedRectangle(cornerRadius: 18))
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Loglar")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(theme.textPrimary)
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 0) {
-                            Text(model.logs.isEmpty ? "Henüz log yok." : model.logs)
-                                .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                .foregroundStyle(theme.textSecondary)
-                                .textSelection(.enabled)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }
-                    .frame(height: 150)
-                    .padding(14)
-                    .background(theme.logBackground, in: RoundedRectangle(cornerRadius: 16))
+            Group {
+                switch model.currentPage {
+                case .main:
+                    mainPage
+                case .logs:
+                    logsPage
                 }
             }
             .padding(20)
@@ -71,6 +35,86 @@ struct ContentView: View {
         .frame(width: 540, height: 500)
         .focusable(false)
         .animation(.spring(response: 0.32, dampingFraction: 0.82), value: model.status.state)
+        .animation(.easeInOut(duration: 0.2), value: model.currentPage)
+    }
+
+    private var mainPage: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                Spacer()
+                statusBadge
+            }
+
+            HStack {
+                Spacer()
+                primaryActionButton(title: model.primaryActionTitle, symbol: model.primaryActionSymbol, enabled: true) {
+                    model.performPrimaryAction()
+                }
+                Spacer()
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Durum")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(theme.textPrimary)
+                infoRow("Servis", model.helperInstalled ? "Hazır" : "Yeniden kurulum gerekli")
+                infoRow("Runtime", model.statusTitle)
+                infoRow("PID", model.status.pid.map(String.init) ?? "—")
+                infoRow("Mesaj", model.status.message)
+            }
+            .padding(16)
+            .background(theme.card, in: RoundedRectangle(cornerRadius: 18))
+
+            Button {
+                model.currentPage = .logs
+            } label: {
+                Label("Loglar", systemImage: "doc.text.magnifyingglass")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(theme.textPrimary)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(theme.card, in: Capsule())
+            }
+            .buttonStyle(ScaleButtonStyle())
+            .focusEffectDisabled()
+
+            Spacer()
+        }
+    }
+
+    private var logsPage: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Button {
+                    model.currentPage = .main
+                } label: {
+                    Label("Geri", systemImage: "chevron.left")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(theme.textPrimary)
+                }
+                .buttonStyle(.plain)
+                .focusEffectDisabled()
+
+                Spacer()
+            }
+
+            Text("Loglar")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(theme.textPrimary)
+
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    Text(model.logs.isEmpty ? "Henüz log yok." : model.logs)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundStyle(theme.textSecondary)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(14)
+            .background(theme.logBackground, in: RoundedRectangle(cornerRadius: 16))
+        }
     }
 
     private var statusBadge: some View {

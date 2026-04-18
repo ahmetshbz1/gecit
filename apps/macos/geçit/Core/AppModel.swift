@@ -2,6 +2,11 @@ import AppKit
 import Combine
 import Foundation
 
+enum Page {
+    case main
+    case logs
+}
+
 @MainActor
 final class AppModel: ObservableObject {
     @Published var helperInstalled = false
@@ -9,6 +14,7 @@ final class AppModel: ObservableObject {
     @Published var status: GecitStatus = .empty
     @Published var logs = "Henüz log yok."
     @Published var installError: String?
+    @Published var currentPage: Page = .main
 
     private let installer = GecitHelperInstaller()
     private let control = GecitControlService()
