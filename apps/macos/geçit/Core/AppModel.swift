@@ -102,7 +102,7 @@ final class AppModel: ObservableObject {
     }
 
     var canStart: Bool {
-        helperInstalled && status.state != .running && status.state != .starting
+        helperInstalled && status.state != .running && status.state != .starting && status.state != .stopping
     }
 
     var needsHelperReinstall: Bool {
@@ -111,5 +111,27 @@ final class AppModel: ObservableObject {
 
     var canStop: Bool {
         helperInstalled && (status.state == .running || status.state == .starting || status.state == .error)
+    }
+
+    var primaryActionTitle: String {
+        if needsHelperReinstall { return "Yeniden Kur" }
+        if canStop { return "Durdur" }
+        return "Başlat"
+    }
+
+    var primaryActionSymbol: String {
+        if needsHelperReinstall { return "arrow.clockwise" }
+        if canStop { return "stop.fill" }
+        return "play.fill"
+    }
+
+    func performPrimaryAction() {
+        if needsHelperReinstall {
+            installHelper()
+        } else if canStop {
+            stop()
+        } else {
+            start()
+        }
     }
 }

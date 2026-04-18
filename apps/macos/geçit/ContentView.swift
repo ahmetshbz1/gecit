@@ -37,15 +37,8 @@ struct ContentView: View {
                 }
 
                 HStack(spacing: 16) {
-                    actionButton(title: model.needsHelperReinstall ? "Yeniden Kur" : "Başlat", symbol: model.needsHelperReinstall ? "arrow.clockwise" : "play.fill", enabled: true) {
-                        if model.needsHelperReinstall {
-                            model.installHelper()
-                        } else {
-                            model.start()
-                        }
-                    }
-                    actionButton(title: "Durdur", symbol: "stop.fill", enabled: model.canStop) {
-                        model.stop()
+                    actionButton(title: model.primaryActionTitle, symbol: model.primaryActionSymbol, enabled: true) {
+                        model.performPrimaryAction()
                     }
                     actionButton(title: "Temizle", symbol: "sparkles", enabled: model.helperInstalled) {
                         model.cleanup()
