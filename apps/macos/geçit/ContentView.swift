@@ -24,14 +24,6 @@ struct ContentView: View {
 
             VStack(alignment: .leading, spacing: 18) {
                 HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("geçit")
-                            .font(.system(size: 28, weight: .semibold, design: .rounded))
-                            .foregroundStyle(theme.textPrimary)
-                        Text("Menü bar kontrol paneli")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(theme.textSecondary)
-                    }
                     Spacer()
                     statusBadge
                 }
@@ -61,17 +53,18 @@ struct ContentView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(theme.textPrimary)
                     ScrollView {
-                        Text(model.logs)
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
-                            .foregroundStyle(theme.textSecondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            Text(model.logs.isEmpty ? "Henüz log yok." : model.logs)
+                                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                                .foregroundStyle(theme.textSecondary)
+                                .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
-                    .frame(maxHeight: 150)
+                    .frame(height: 150)
                     .padding(14)
                     .background(theme.logBackground, in: RoundedRectangle(cornerRadius: 16))
                 }
-
-                Spacer()
             }
             .padding(20)
         }
