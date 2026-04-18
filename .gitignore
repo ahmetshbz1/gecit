@@ -10,3 +10,7 @@ work/
 CLAUDE.md
 docs/AGENTS.md
 /gecit
+apps/macos/build/
+.claude-xcodebuild.log
+*.xcuserstate
+xcuserdata/

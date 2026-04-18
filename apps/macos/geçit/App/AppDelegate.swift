@@ -22,6 +22,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         false
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        eventMonitor?.stop()
+        model.cleanup()
+    }
+
     private func launchMainApp() {
         setupStatusBar()
         setupPopover()
@@ -32,24 +37,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showOnboarding() {
         NSApp.setActivationPolicy(.regular)
         let controller = OnboardingWindowController(model: model) { [weak self] in
-            self?.onboardingController?.close()
-            self?.onboardingController = nil
-            NSApp.setActivationPolicy(.accessory)
-            self?.launchMainApp()
-            self?.showPopover()
+            self?.handleOnboardingCompletion()
         }
         onboardingController = controller
         controller.show()
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    private func handleOnboardingCompletion() {
+        onboardingController?.close()
+        onboardingController = nil
+        NSApp.setActivationPolicy(.accessory)
+        launchMainApp()
+        showPopover()
+    }
+
     private func setupStatusBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "shield.lefthalf.filled", accessibilityDescription: "geçit")
-            button.action = #selector(togglePopover)
-            button.target = self
-        }
+        setupStatusItemButton()
+    }
+
+    private func setupStatusItemButton() {
+        guard let button = statusItem?.button else { return }
+        button.image = NSImage(systemSymbolName: "shield.lefthalf.filled", accessibilityDescription: "geçit")
+        button.action = #selector(togglePopover)
+        button.target = self
     }
 
     private func setupPopover() {
@@ -57,8 +69,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentSize = NSSize(width: 360, height: 500)
         popover.behavior = .transient
         popover.animates = true
-        popover.contentViewController = NSHostingController(rootView: ContentView(model: model))
+        popover.contentViewController = makePopoverContentController()
         self.popover = popover
+    }
+
+    private func makePopoverContentController() -> NSHostingController<ContentView> {
+        NSHostingController(rootView: ContentView(model: model))
     }
 
     private func setupEventMonitor() {
