@@ -104,12 +104,15 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
                         Spacer()
-                        HoverCapsuleButton(helpText: "Varsayılan ayarlara dön", action: {
+                        Button {
                             model.resetSettingsToDefault()
-                        }) {
-                            Text("Varsayılana dön")
-                                .font(.system(size: 12, weight: .semibold))
+                        } label: {
+                            HoverCapsuleContent(helpText: "Varsayılan ayarlara dön") {
+                                Text("Varsayılana dön")
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
                         }
+                        .buttonStyle(ScaleButtonStyle())
                     }
                 settingsField(title: "Fake TTL") {
                     NativeStepperField(value: $model.settingsFakeTTL, minValue: 1, maxValue: 64)
@@ -213,19 +216,27 @@ struct ContentView: View {
 
     private var headerActions: some View {
         HStack(spacing: 10) {
-            HoverCapsuleButton(helpText: "Loglar", action: {
+            Button {
                 model.currentPage = .logs
-            }) {
-                Image(systemName: "doc.text.magnifyingglass")
-                    .font(.system(size: 14, weight: .semibold))
+            } label: {
+                HoverCapsuleContent(helpText: "Loglar") {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.system(size: 14, weight: .semibold))
+                }
             }
+            .buttonStyle(ScaleButtonStyle())
+            .focusEffectDisabled()
 
-            HoverCapsuleButton(helpText: "Ayarlar", action: {
+            Button {
                 model.currentPage = .settings
-            }) {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 14, weight: .semibold))
+            } label: {
+                HoverCapsuleContent(helpText: "Ayarlar") {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 14, weight: .semibold))
+                }
             }
+            .buttonStyle(ScaleButtonStyle())
+            .focusEffectDisabled()
         }
     }
 
