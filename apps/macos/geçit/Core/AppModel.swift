@@ -156,6 +156,21 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func resetSettingsToDefault() {
+        settingsFakeTTL = 8
+        settingsDoHEnabled = true
+        settingsDoHUpstream = "cloudflare"
+        settingsInterface = ""
+        settingsPorts = "443"
+    }
+
+    var currentSettingsSummary: String {
+        let upstream = settingsDoHUpstream.isEmpty ? "cloudflare" : settingsDoHUpstream
+        let interfaceValue = settingsInterface.isEmpty ? "otomatik" : settingsInterface
+        let dohValue = settingsDoHEnabled ? "açık" : "kapalı"
+        return "TTL \(settingsFakeTTL) • DoH \(dohValue) • \(upstream) • \(interfaceValue) • \(settingsPorts)"
+    }
+
     private func startCommand() -> String {
         let ttl = max(1, settingsFakeTTL)
         let doh = settingsDoHEnabled ? "true" : "false"

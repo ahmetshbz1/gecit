@@ -52,6 +52,7 @@ struct ContentView: View {
                 runtimeBadgeRow
                 infoRow("PID", model.status.pid.map(String.init) ?? "—")
                 infoRow("Mesaj", model.status.message)
+                infoRow("Ayarlar", model.currentSettingsSummary)
             }
             .padding(16)
             .background(theme.card, in: RoundedRectangle(cornerRadius: 18))
@@ -98,6 +99,14 @@ struct ContentView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
+                    HStack {
+                        Spacer()
+                        Button("Varsayılana dön") {
+                            model.resetSettingsToDefault()
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(theme.textMuted)
+                    }
                 settingsField(title: "Fake TTL") {
                     NativeStepperField(value: $model.settingsFakeTTL, minValue: 1, maxValue: 64)
                 }
