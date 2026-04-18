@@ -104,11 +104,12 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
                         Spacer()
-                        Button("Varsayılana dön") {
+                        HoverCapsuleButton(helpText: "Varsayılan ayarlara dön", action: {
                             model.resetSettingsToDefault()
+                        }) {
+                            Text("Varsayılana dön")
+                                .font(.system(size: 12, weight: .semibold))
                         }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(theme.textMuted)
                     }
                 settingsField(title: "Fake TTL") {
                     NativeStepperField(value: $model.settingsFakeTTL, minValue: 1, maxValue: 64)
