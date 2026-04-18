@@ -3,7 +3,6 @@ import Foundation
 
 @MainActor
 final class RuntimeStore: ObservableObject {
-    let objectWillChange = ObservableObjectPublisher()
     @Published var helperInstalled = false
     @Published var onboardingCompleted = false
     @Published var status: GecitStatus = .empty
