@@ -52,7 +52,7 @@ struct OnboardingView: View {
                     Spacer()
                     OnboardingActionButton(
                         label: model.helperInstalled ? "Devam Et" : "Kurulumu Başlat",
-                        color: model.helperInstalled ? theme.primaryButton : theme.primaryButton,
+                        color: model.helperInstalled ? theme.primaryButtonStart : theme.primaryButtonStart,
                         textColor: model.helperInstalled ? theme.primaryButtonText : theme.primaryButtonText,
                         action: {
                             if model.helperInstalled {

@@ -48,11 +48,13 @@ final class AppModel: ObservableObject {
     }
 
     func start() {
+        status = GecitStatus(state: .starting, pid: status.pid, message: "Gecit başlatılıyor", updatedAt: status.updatedAt)
         try? control.send("start")
         refreshSoon()
     }
 
     func stop() {
+        status = GecitStatus(state: .stopping, pid: status.pid, message: "Gecit durduruluyor", updatedAt: status.updatedAt)
         try? control.send("stop")
         refreshSoon()
     }
@@ -78,14 +80,18 @@ final class AppModel: ObservableObject {
 
     private func startPolling() {
         timer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            guard let self else { return }
+            Task { @MainActor [weak self] in
                 self?.refresh()
             }
         }
     }
 
     private func refreshSoon() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+            self?.refresh()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
             self?.refresh()
         }
     }

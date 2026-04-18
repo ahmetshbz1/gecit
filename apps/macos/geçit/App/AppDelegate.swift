@@ -5,8 +5,9 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel()
     private var statusItem: NSStatusItem?
+    private var popover: NSPopover?
+    private var eventMonitor: EventMonitor?
     private var onboardingController: OnboardingWindowController?
-    private var dashboardController: DashboardWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if model.onboardingCompleted {
@@ -17,8 +18,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
     private func launchMainApp() {
         setupStatusBar()
+        setupPopover()
+        setupEventMonitor()
         model.refresh()
     }
 
@@ -29,7 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.onboardingController = nil
             NSApp.setActivationPolicy(.accessory)
             self?.launchMainApp()
-            self?.showDashboard(nil)
+            self?.showPopover()
         }
         onboardingController = controller
         controller.show()
@@ -42,36 +49,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.image = NSImage(systemSymbolName: "shield.lefthalf.filled", accessibilityDescription: "geçit")
             button.imagePosition = .imageLeading
             button.title = " geçit"
+            button.action = #selector(togglePopover)
+            button.target = self
         }
-
-        let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Paneli Aç", action: #selector(showDashboard), keyEquivalent: "o"))
-        menu.addItem(NSMenuItem(title: "Başlat", action: #selector(startEngine), keyEquivalent: "s"))
-        menu.addItem(NSMenuItem(title: "Durdur", action: #selector(stopEngine), keyEquivalent: "d"))
-        menu.addItem(NSMenuItem(title: "Temizle", action: #selector(cleanupEngine), keyEquivalent: "c"))
-        menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Çıkış", action: #selector(quitApp), keyEquivalent: "q"))
-        statusItem?.menu = menu
     }
 
-    @objc private func showDashboard(_ sender: Any?) {
-        if dashboardController == nil {
-            dashboardController = DashboardWindowController(model: model)
+    private func setupPopover() {
+        let popover = NSPopover()
+        popover.contentSize = NSSize(width: 540, height: 500)
+        popover.behavior = .transient
+        popover.animates = true
+        popover.contentViewController = NSHostingController(rootView: ContentView(model: model))
+        self.popover = popover
+    }
+
+    private func setupEventMonitor() {
+        eventMonitor = EventMonitor(mask: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            guard let self, let popover = self.popover, popover.isShown else { return }
+            if let window = popover.contentViewController?.view.window {
+                let mouseLocation = NSEvent.mouseLocation
+                if window.frame.contains(mouseLocation) {
+                    return
+                }
+            }
+            self.closePopover()
         }
-        dashboardController?.show()
+    }
+
+    @objc private func togglePopover() {
+        guard let popover else { return }
+        if popover.isShown {
+            closePopover()
+        } else {
+            showPopover()
+        }
+    }
+
+    private func showPopover() {
+        guard let button = statusItem?.button, let popover else { return }
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        eventMonitor?.start()
+        activateAndFocus(popover: popover)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self, weak popover] in
+            guard let self, let popover else { return }
+            self.activateAndFocus(popover: popover)
+        }
+    }
+
+    private func activateAndFocus(popover: NSPopover) {
         NSApp.activate(ignoringOtherApps: true)
+        popover.contentViewController?.view.window?.makeKeyAndOrderFront(nil)
     }
 
-    @objc private func startEngine() {
-        model.start()
-    }
-
-    @objc private func stopEngine() {
-        model.stop()
-    }
-
-    @objc private func cleanupEngine() {
-        model.cleanup()
+    private func closePopover() {
+        popover?.performClose(nil)
+        eventMonitor?.stop()
     }
 
     @objc private func quitApp() {
