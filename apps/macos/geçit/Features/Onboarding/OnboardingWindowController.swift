@@ -10,10 +10,13 @@ final class OnboardingWindowController: NSWindowController {
         let view = OnboardingView(model: model, onComplete: onComplete)
         let hosting = NSHostingController(rootView: view)
         let window = NSWindow(contentViewController: hosting)
-        window.title = "geçit Kurulum"
         window.setContentSize(NSSize(width: 720, height: 520))
         window.center()
         window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.backgroundColor = .black
+        window.isOpaque = true
         super.init(window: window)
         shouldCascadeWindows = false
     }
